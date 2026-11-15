@@ -8,6 +8,8 @@ No texture images, imported models, audio files, game engines, external fonts or
 
 ## Explore
 
+[Open the live demo on GitHub Pages](https://zeeka32.github.io/abyssal-space/).
+
 Open [`index.html`](index.html) in Chrome or Edge with WebGPU and hardware acceleration enabled, choose a detail level, then press **Start exploration**. Generation, GPU setup, audio sources and simulation begin only after Start. Waiting on the welcome screen does not advance the orbital clock. The file works offline; no server or installation is needed to play.
 
 | Destination | What you will find |
@@ -67,6 +69,8 @@ npm run build
 ```
 
 This rebuilds `index.html` in the repository root. The build reports the uncompressed and gzip sizes. `npm run build:readable` writes an unminified `index.html`; run `npm run build` again before distributing it.
+
+GitHub Pages publishes the root of `main` directly, with `.nojekyll` preserving the static files. To publish source changes, rebuild and commit the updated `index.html`, then push to `main`.
 
 `npm run build:dev` writes a separate, ignored `dev.html`. In that version, `F` flies a 60-second route, and `B` runs the route as a benchmark with fixed resolution and frame/GPU timing statistics. `F`, `B` or a destination shortcut cancels a flight. Development diagnostics never ship in `index.html`.
 
