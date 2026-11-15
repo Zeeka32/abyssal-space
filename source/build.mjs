@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { transformSync } from 'esbuild';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const FILES = ['quality.js', 'math.js', 'shaders.js', 'world.js', 'main.js', 'audio.js']; // concatenation order matters
+const FILES = ['quality.js', 'start.js', 'math.js', 'world.js', 'shaders.js', 'main.js', 'audio.js']; // concatenation order matters
 const dev = process.argv.includes('--dev'), readable = dev || process.argv.includes('--readable');
 const out = dev ? 'dev.html' : 'index.html';
 if (dev) FILES.push('dev.js');
@@ -32,4 +32,4 @@ if (readable) {
 }
 writeFileSync(path.join(here, '..', out), html);
 const gz = gzipSync(Buffer.from(html), { level: 9 }).length;
-console.log(`${out}: ${(html.length / 1024).toFixed(1)} kB${readable ? ' (readable)' : ''}, ${(gz / 1024).toFixed(1)} kB gzipped`);
+console.log(`${out}: ${(Buffer.byteLength(html) / 1024).toFixed(1)} KiB${readable ? ' (readable)' : ''}, ${(gz / 1024).toFixed(1)} KiB gzipped`);

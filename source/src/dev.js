@@ -1,9 +1,32 @@
 // ============================================================================
 // development tools: only in dev.html (npm run build:dev), never in index.html
 // ============================================================================
-//   F    fly the camera along the scripted path (FLY in main.js), one minute through the whole world
+//   F    fly the camera along the scripted path (FLY in world.js), one minute through the whole world
 //   B    the same flight as a benchmark: the resolution stays fixed, every frame is timed, the result is shown at the end
-//   F, B or 1-6 during a flight stop it
+//   F, B or 1-7 during a flight stop it
+// Read-only diagnostics and explicit camera controls for local browser verification.
+globalThis.__astral = {
+  pose: i => { destination(i); ui(false); render(); },
+  pause: value => { simulationPaused = value; },
+  orbits: time => {
+    updateOrbits(time);
+    const snapshot = BODIES.map(b => ({ p: [...b.p], r: b.r, radius: b.orbitRadius, period: b.period, parent: b.parent }));
+    updateOrbits(F[TIME]); return snapshot;
+  },
+  state: () => ({ ready: !dead, menu, width: W, height: H, quality: LV, samples: AA, gpuMs: F[GPU],
+    camera: [F[CX], F[CY], F[CZ]], time: F[TIME], adapter: { vendor: adapter.info?.vendor, architecture: adapter.info?.architecture, device: adapter.info?.device, description: adapter.info?.description },
+    planets: BODIES.length, asteroids: nAsteroids, audio: AC?.state || 'not started', muted,
+    propulsion: { ...AUDIO_STATE }, centers: BODIES.map(b => [...b.p]) }),
+  path: t => { F[FLT] = t; flyAt(); return [F[CX], F[CY], F[CZ]]; },
+  bodies: BODIES,
+  star: STAR,
+  distant: () => DISTANT_WORLDS.map((b, i) => ({ p: Array.from(world.planets.subarray((BODIES.length + 1 + i) * 12, (BODIES.length + 1 + i) * 12 + 3)), r: b.r })),
+  hole: BLACK_HOLE,
+  collide: (x, y, z, dx, dy, dz) => {
+    F[CX] = x; F[CY] = y; F[CZ] = z; moveCamera(dx, dy, dz);
+    return [F[CX], F[CY], F[CZ]];
+  },
+};
 {
   const LOGN = 1 << 16, logFrame = new Float32Array(LOGN), logGpu = new Float32Array(LOGN);
   let flying = false, bench = false, last = 0, nFrame = 0, nGpu = 0;
@@ -30,10 +53,10 @@
     if (e.code === 'KeyF' || e.code === 'KeyB') {
       if (flying) stop();
       else {
-        flying = true; bench = e.code === 'KeyB'; F[FLT] = 0; last = F[LAST]; nFrame = nGpu = 0;
+        trackingBody = -1; flying = true; bench = e.code === 'KeyB'; F[FLT] = 0; last = F[LAST]; nFrame = nGpu = 0;
         // a benchmark hides the stats line and holds the resolution: dynT at -Infinity keeps frame() from tuning it
         if (bench) { hud = false; info.textContent = ''; dynT = -Infinity; }
       }
-    } else if (/Digit[1-6]/.test(e.code)) stop();
+    } else if (/Digit[1-7]/.test(e.code)) stop();
   });
 }

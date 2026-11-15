@@ -2,154 +2,120 @@
 <html lang=en>
 <head>
 <meta charset=utf-8>
-<title>Abyssal Garden</title>
+<title>Astral Space</title>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=theme-color content=#03131c>
+<meta name=theme-color content=#050710>
+<meta name=description content="Explore a fully procedural planetary system. Planets, rings, asteroids, stars and sound, generated entirely from code with WebGPU.">
 <style>
-/* The class on <body> is the state of the page:
-   l = loading, m = menu, g = in the scene (g p while the mouse is captured), l e = failed to start */
-html { background: #03131c; }
+/* Body states: l loading, m menu, g exploring, g p pointer lock, l e startup error. */
+html { background: #050710; }
 body {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%; margin: 0; overflow: hidden;
-  background: radial-gradient(#0b3a4d, #03131c 70%);
-  font: 700 clamp(13px, .7vw + .9vh, 36px)/1.4 system-ui, sans-serif; color: #e8fbff;
+  position: fixed; inset: 0; margin: 0; overflow: hidden;
+  background: radial-gradient(#17142c, #050710 70%); color: #eeeee9;
+  font: 400 clamp(13px, .7vw + .9vh, 36px)/1.4 system-ui, sans-serif;
   -webkit-user-select: none; user-select: none;
 }
-/* a phone held upright gets the whole page turned on its side, so the scene is always landscape */
+/* Touch devices keep the scene in landscape even when fullscreen rotation is unavailable. */
 @media (orientation: portrait) and (pointer: coarse) {
   body { width: 100dvh; height: 100dvw; transform-origin: 0 0; transform: rotate(90deg) translateY(-100%); }
 }
-
-/* the scene: blurred and dimmed behind the menu, comes into focus when you dive */
 canvas {
   position: absolute; width: 100%; height: 100%; touch-action: none; cursor: crosshair;
-  transition: filter 1s, transform 1s, opacity 2s;
+  transition: filter 1s, transform 1s, opacity 1s;
 }
-body:not(.g) canvas { filter: blur(1vmax) brightness(.5); transform: scale(1.06); }
+body:not(.g) canvas { filter: blur(4px) brightness(.65); transform: scale(1.025); }
 .l canvas { opacity: 0; }
-
-/* menu: the loading bar and the buttons share one grid cell, so nothing jumps when they swap */
+.welcome canvas, .welcome #nav { display: none; }
+.welcome #subtitle::after { content: ' Your universe begins when you press Start.'; display: block; margin-top: .6em; color: #c6b798; }
 #m {
-  position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: min(2.2em, 6vmin);
-  padding: 1em 1em 4.5em; text-align: center; background: radial-gradient(#03131c00 30%, #03131ccc);
+  position: absolute; inset: 0; display: grid; place-content: center; justify-items: center;
+  gap: min(2em, 4vmin); padding: 2em 1em 4em; text-align: center; overflow-y: auto;
+  background: radial-gradient(ellipse at 50% 45%, #05071018, #050710d9);
   transition: opacity .5s, visibility .5s;
 }
 .g #m, .m #l, .l #g { opacity: 0; visibility: hidden; }
-h1 {
-  margin: 0; font: 900 4.4em/1 system-ui, sans-serif; letter-spacing: .05em; text-transform: uppercase;
-  color: #0000; background: linear-gradient(#fff 25%, #7ff3ff 60%, #14a9c4);
-  -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 .06em .2em #000c);
-}
 p { margin: 0; }
-#a { display: grid; width: 27em; max-width: 100%; }
-#a > * { grid-area: 1/1; transition: opacity .8s, visibility .8s; }
+#title { max-width: 95vw; }
+#eyebrow { margin-bottom: 1.5em; font: 500 .65em/1.4 ui-monospace, Consolas, monospace; letter-spacing: .44em; color: #c6b798; }
+h1 { margin: 0; font: 300 clamp(2.5em, 7vw, 7em)/1.1 Georgia, 'Times New Roman', serif; letter-spacing: .035em; color: #f0ece3; }
+#subtitle { margin-top: 1.3em; font-size: .76em; letter-spacing: .05em; color: #a6a6b8; }
+#a { display: grid; width: 34em; max-width: 100%; }
+#a > * { grid-area: 1/1; transition: opacity .4s, visibility .4s; }
 #s, #w, #q, #k, #h { font-size: .8em; letter-spacing: .12em; text-transform: uppercase; }
-#w { margin-top: 1.2em; color: #7ff3ff; text-wrap: balance; }
-
-/* loading bar */
-#p {
-  height: .5em; margin: .4em 0 1em; overflow: hidden; border-radius: 1em; background: #03131c;
-  box-shadow: 0 0 0 2px #7ff3ff80, 0 0 1.5em #14a9c4;
-}
-#b {
-  display: block; height: 100%; background: linear-gradient(90deg, #14a9c4, #9ff6ff);
-  transform: scaleX(0); transform-origin: 0; will-change: transform;
-}
+#w { margin-top: 1.2em; color: #c6b798; text-wrap: balance; }
+#p { height: .3em; margin: .4em 0 1em; overflow: hidden; border-radius: 1em; background: #171722; box-shadow: 0 0 0 1px #c6b79860; }
+#b { display: block; height: 100%; background: #d8c6a3; transform: scaleX(0); transform-origin: 0; transition: transform .3s; }
 .e #p { visibility: hidden; }
-.e #s { font-size: 1.1em; letter-spacing: 0; text-transform: none; }
-
-/* buttons */
-button, a {
-  display: flex; align-items: center; justify-content: center; gap: .6em; padding: .8em 1.4em; border: 0;
-  border-radius: .5em; background: #fff; box-shadow: inset 0 -.2em #0003, 0 .3em 1em #0009;
-  font: 800 1em/1.2 system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; text-decoration: none;
-  color: #03222d; cursor: pointer; transition: transform .12s, filter .12s;
-}
-button:hover, a:hover { transform: translateY(-.12em); filter: brightness(1.15); }
-button:active, a:active { transform: translateY(.1em); filter: brightness(.9); }
-:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-#g { display: grid; gap: min(1.2em, 3.5vmin); }
-#d {
-  padding: .9em; background: linear-gradient(#9ff6ff, #19c3d6); font-size: 1.3em;
-  box-shadow: inset 0 -.2em #0003, 0 0 2em #19c3d6b3;
-}
-
-/* GitHub and Ko-fi: always at the bottom of the menu, in their own colours */
-#f { position: absolute; left: 0; right: 0; bottom: 1.5em; display: flex; justify-content: center; gap: 1em; font-size: .8em; }
-a + a { background: #ff5e5b; color: #fff; }
-svg { width: 1.5em; height: 1.5em; fill: currentColor; }
-
-/* dark plates under the dive button: detail level, list of controls, touch hint */
-#q, #k, #h { padding: 1em 1.6em; border-radius: .7em; background: #03131cb3; }
-
-/* detail level: three buttons in a row, the current one lit */
-#q { display: flex; align-items: center; gap: .4em; padding: .4em; }
-#q span { flex: 1; color: #7ff3ff; }
-#q button { flex: 1.2; padding: .7em 0; background: none; box-shadow: none; color: #e8fbff; }
-#q button:hover { background: #7ff3ff33; }
-#q .on { background: linear-gradient(#9ff6ff, #19c3d6); box-shadow: inset 0 -.2em #0003; color: #03222d; pointer-events: none; }
-
-/* list of controls: two groups, key caps right-aligned against their labels */
+.e #s { font-size: 1.1em; letter-spacing: 0; text-transform: none; overflow-wrap: anywhere; }
+button { border: 0; font: inherit; cursor: pointer; transition: transform .12s, filter .12s; }
+button:hover { transform: translateY(-.1em); filter: brightness(1.15); }
+button:active { transform: translateY(.1em); }
+:focus-visible { outline: 2px solid #e3d4b4; outline-offset: 4px; }
+#g { display: grid; justify-items: center; width: 100%; gap: 1.1em; }
+#d { width: 24em; max-width: 100%; padding: 1.2em 2em; font-size: .78em; font-weight: 500; letter-spacing: .21em; text-transform: uppercase; background: #d8c6a3; color: #17151b; border-radius: 2px; box-shadow: 0 0 3em #bca57b20; }
+#q { display: flex; align-items: center; gap: .4em; width: 26em; max-width: 95%; padding: .4em; font-size: .6em; background: #10121cbd; border: 1px solid #aaa3; border-radius: 3px; }
+#q span { flex: 1; color: #c6b798; }
+#q button { flex: 1.2; padding: .7em 0; background: none; color: #eeeee9; border-radius: 2px; font-weight: 500; text-transform: uppercase; }
+#q .on { background: #d8c6a3; color: #17151b; pointer-events: none; }
+#nav { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5em; width: 100%; }
+#nav button { padding: .8em .3em; font: 400 .65em/1.3 ui-monospace, Consolas, monospace; color: #a6a6b8; letter-spacing: .05em; text-transform: uppercase; background: #0e101bc4; border: 1px solid #9d99bc29; border-radius: 2px; }
+#nav button.selected { color: #e3d4b4; border-color: #bca57b99; background: #bca57b12; }
+#k, #h { padding: 1em 1.6em; font-size: .58em; color: #9294a8; letter-spacing: .05em; }
 #k { display: flex; justify-content: center; gap: 2em; text-align: left; }
 #k p { display: grid; grid-template-columns: auto auto; align-content: start; align-items: center; gap: .55em .9em; }
-#k p + p { padding-left: 2em; border-left: 2px solid #7ff3ff40; }
+#k p + p { padding-left: 2em; border-left: 1px solid #aaa2; }
 #k i { display: flex; justify-self: end; align-items: center; gap: .25em; font-style: normal; }
-#k b {
-  min-width: 1.1em; padding: .2em .5em; border-radius: .35em; background: #e8fbff;
-  box-shadow: inset 0 -.15em #0004; color: #03222d; text-align: center;
-}
+#k b { min-width: 1.1em; padding: .2em .5em; border-radius: .25em; background: #242532; color: #d8d7df; text-align: center; font-weight: 400; }
 #h { display: none; }
-@media (pointer: coarse), (max-height: 30em) {
-  #k { display: none; }
-}
-@media (pointer: coarse) {
-  #h { display: block; }
-}
-
-/* in the scene: a small menu button (hidden while the mouse is captured, Esc does the same) and the stats line */
-#o {
-  position: absolute; top: .6em; right: .6em; display: none; padding: .3em .6em; background: #03222dd9;
-  box-shadow: inset 0 0 0 2px #7ff3ff, 0 .3em 1em #0009; font-size: 1.3em; color: #e8fbff; opacity: .8;
-}
-.g #o { display: flex; }
+#f { position: absolute; left: 1em; right: 1em; bottom: 1.4em; color: #77798c; font: 400 .5em/1.6 ui-monospace, Consolas, monospace; letter-spacing: .16em; }
+#f span { display: block; color: #535669; font-size: .9em; }
+#credit { display: block; margin-top: .65em; color: #a6a6b8; font-size: 1.1em; letter-spacing: .06em; text-decoration: none; }
+#credit:hover { color: #e3d4b4; text-decoration: underline; }
+#nav button:last-child { grid-column: 1 / -1; }
+#o { position: absolute; top: .6em; right: .6em; display: none; padding: .3em .6em; background: #111324d9; border: 1px solid #c6b798; border-radius: .5em; font-size: 1.3em; color: #eeeee9; opacity: .8; }
+.g #o { display: block; }
 .p #o { display: none; }
-#i {
-  position: absolute; top: 1em; left: 1.2em; margin: 0; font: .8em/1.6 ui-monospace, Consolas, monospace;
-  white-space: pre-wrap; text-shadow: 0 1px 4px #000; pointer-events: none;
-}
+#i { position: absolute; top: 1em; left: 1.2em; margin: 0; font: .7em/1.6 ui-monospace, Consolas, monospace; white-space: pre-wrap; text-shadow: 0 1px 4px #000; pointer-events: none; }
+#flight { display: none; position: absolute; left: 2.2em; bottom: 2em; align-items: center; gap: 1em; pointer-events: none; font: 400 .62em/1.4 ui-monospace, Consolas, monospace; letter-spacing: .15em; color: #d6cab5; text-shadow: 0 1px 6px #000; }
+.g #flight { display: flex; }
+#signal { width: 5px; height: 5px; background: #d6cab5; border-radius: 50%; box-shadow: 0 0 10px #d6cab5; }
+#flight-hint { color: #888a9c; margin-left: 2em; font-size: .85em; letter-spacing: .05em; }
+@media (pointer: coarse), (max-height: 30em) { #k { display: none; } }
+@media (pointer: coarse) { #h { display: block; } }
+@media (max-width: 650px) { #flight-hint { display: none; } #nav button { font-size: .7em; } #eyebrow { letter-spacing: .18em; } }
+@media (max-height: 540px) { #m { gap: .8em; padding-top: 1em; padding-bottom: 1em; place-content: start center; } h1 { font-size: 3em; } #eyebrow { margin-bottom: .5em; } #subtitle { margin-top: .5em; } #g { gap: .6em; } #f { position: static; margin-top: .5em; } }
 </style>
 </head>
-<body class=l>
-<canvas id=c></canvas>
+<body class="m welcome" data-stage=welcome>
+<canvas id=c aria-label="Procedurally generated planetary system"></canvas>
 <div id=m>
-  <h1>Abyssal Garden</h1>
+  <div id=title><p id=eyebrow>A procedural cosmic explorer</p><h1>Astral Space</h1><p id=subtitle>Six worlds. A thousand horizons. All made of mathematics.</p></div>
   <div id=a>
-    <div id=l><div id=p><i id=b></i></div><p id=s>Diving…</p><p id=w hidden>Use Google Chrome for optimal experience</p></div>
+    <div id=l><div id=p><i id=b></i></div><p id=s role=status>Charting the system...</p><p id=w hidden>Use Google Chrome for optimal experience</p></div>
     <div id=g>
-      <button id=d>Dive in</button>
+      <button id=d>Start exploration</button>
       <p id=q><span>Detail</span><button>Low</button><button>Medium</button><button>High</button></p>
+      <div id=nav role=group aria-label=Destinations>
+        <button aria-pressed=true>1 &middot; Overview</button><button aria-pressed=false>2 &middot; Verdant</button><button aria-pressed=false>3 &middot; Selene</button>
+        <button aria-pressed=false>4 &middot; Cinder</button><button aria-pressed=false>5 &middot; Veil</button><button aria-pressed=false>6 &middot; Kestrel</button>
+        <button aria-pressed=false>7 &middot; Nadir / Black hole</button>
+      </div>
       <div id=k>
         <p>
-          <i><b>W</b><b>A</b><b>S</b><b>D</b></i>Swim
+          <i><b>W</b><b>A</b><b>S</b><b>D</b></i>Fly
           <i><b>Q</b><b>E</b></i>Down / up
           <i><b>Shift</b></i>Faster
-          <i><b>1</b>–<b>6</b></i>Viewpoints
+          <i><b>1</b>&ndash;<b>7</b></i>Viewpoints
         </p>
-        <p>
-          <i><b>Esc</b></i>Menu
-          <i><b>M</b></i>Mute
-          <i><b>H</b></i>Stats
-        </p>
+        <p><i><b>Esc</b></i>Menu<i><b>M</b></i>Mute<i><b>H</b></i>Stats</p>
       </div>
-      <p id=h>Hold to swim forward · slide to steer · second finger to go faster</p>
+      <p id=h>Hold to fly forward &middot; slide to steer &middot; second finger to go faster</p>
     </div>
   </div>
-  <p id=f>
-    <a href=https://github.com/Noniv/abyssal-garden target=_blank><svg viewBox="0 0 16 16"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>GitHub</a>
-    <a href=https://ko-fi.com/noniv target=_blank><svg viewBox="0 0 24 24"><path fill-rule=evenodd d="M2 5h16.5a4.5 4.5 0 0 1 0 9H17a6 6 0 0 1-6 5H8a6 6 0 0 1-6-6zM17 8v3h1.5a1.5 1.5 0 0 0 0-3zM9.5 15.5 5.9 12a2.2 2.2 0 0 1 3.6-2.5 2.2 2.2 0 0 1 3.6 2.5z"/></svg>Support</a>
-  </p>
+  <p id=f>No textures &middot; No models &middot; No sound files<span>Built entirely from code</span><a id=credit href=https://github.com/Noniv/abyssal-garden target=_blank rel="noopener noreferrer">Original project: Abyssal Garden by Noniv &nearr;</a></p>
 </div>
-<button id=o aria-label=Menu>≡</button>
+<button id=o aria-label=Menu>&#8801;</button>
+<div id=flight><span id=signal></span><span id=sector>The solar system</span><span id=flight-hint>WASD to fly &nbsp; / &nbsp; 1&ndash;7 to explore &nbsp; / &nbsp; ESC for menu</span></div>
 <pre id=i></pre>
 <script>
 /*SCRIPT*/

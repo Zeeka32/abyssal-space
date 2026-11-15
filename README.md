@@ -1,106 +1,107 @@
-# Abyssal Garden
+# Astral Space
 
-**A dreamy underwater world you can swim through, right in your browser.**
+A fully procedural planetary system you can fly through in your browser. Sun-centered worlds, luminous rings, asteroid fields, a black hole, distant giant planets, spiral galaxies and a synthesized onboard soundscape, all in one self-contained HTML file.
 
-Towering kelp forests, sunbeams pouring through a rippling surface, a sunken ship, manta rays gliding overhead.
-And all of it is made by code: no images, no 3D models, no sound files. The whole world fits in **one 96 KB HTML file**.
+No texture images, imported models, audio files, game engines, external fonts or runtime downloads. The documentation screenshots are captures of the live renderer, not assets used by the scene.
 
-![Kelp forest with a stone whale tail and a manta ray](.github/screenshots/whale-fluke.jpg)
+![The planetary system](.github/screenshots/space-overview.png)
 
-## Try it
+## Explore
 
-1. Download [`index.html`](index.html).
-2. Open it in **Chrome** or **Edge** on a desktop computer.
-3. Wait a few seconds while the world is built, then press **Dive in** and start swimming.
+Open [`index.html`](index.html) in Chrome or Edge with WebGPU and hardware acceleration enabled, choose a detail level, then press **Start exploration**. Generation, GPU setup, audio sources and simulation begin only after Start. Waiting on the welcome screen does not advance the orbital clock. The file works offline; no server or installation is needed to play.
 
-Nothing to install, and it works offline. It needs a browser with **WebGPU**. If you see *"This scene needs WebGPU"*, update your browser or switch to Chrome / Edge.
-
-## What's down there
-
-- **Kelp forests** that sway in the current and sparkle with tiny gold and green specks
-- **Light rays** streaming down from a wavy surface, with shimmering caustics on the sea floor
-- **A sunken wooden ship**, a **giant stone whale tail**, rock arches, canyons and floating boulders
-- **Manta rays**, schools of fish, rising bubbles and drifting particles
-- **A purple grotto** with glowing magenta ground cover, coral and barrel sponges
-- **A soundscape** made up as you listen: a deep rumble, distant whale calls, soft chimes and bubbles
-
-| | |
+| Destination | What you will find |
 |---|---|
-| ![Shipwreck](.github/screenshots/shipwreck.jpg) | ![Looking up through the kelp](.github/screenshots/kelp-forest.jpg) |
-| ![Barrel sponges](.github/screenshots/sponge-garden.jpg) | ![Light rays over the kelp basin](.github/screenshots/light-rays.jpg) |
+| Aurelia | A banded gas giant with tilted, translucent rings, ring shadows and scattered debris |
+| Verdant | Procedural continents, blue oceans, polar ice, moving clouds and lights on the night side |
+| Selene | A cratered moon orbiting Aurelia |
+| Cinder | A volcanic world with glowing, slowly pulsing lava fissures |
+| Veil | A frozen world with fractured ice and a cyan atmosphere |
+| Kestrel | A rocky frontier world near the asteroid belt |
+| Nadir | A black hole with a dark horizon, animated accretion disk, photon ring and stylized background lensing |
 
-![The purple grotto](.github/screenshots/purple-grotto.jpg)
+The sun starts at the origin, surrounded by five primary planets at different phases on nearly coplanar circular paths. Subtle orbit guides and the overview show the complete arrangement immediately. Inner worlds have shorter periods. Selene orbits Aurelia; the giant's rings, atmosphere and debris travel with it. Distances and periods are deliberately compressed. This is an artistic system rather than an N-body gravity or general-relativity simulation.
+
+Three enormous planets stand far beyond the local system at fixed positions. Three procedural spiral galaxies fill distant celestial directions. These background objects never orbit the local sun and have no destination buttons.
+
+Destination views follow their world until you start flying. Press its number again to return to its current position. Spherical collision boundaries follow the planets and prevent entering them, the star or the black hole's horizon. Rings and asteroids remain passable.
+
+![Nadir's procedural accretion disk and lensed background](.github/screenshots/space-black-hole.png)
+
+![Verdant's procedural continents and atmosphere](.github/screenshots/space-verdant.png)
 
 ## Controls
 
-| | Keyboard & mouse |
+| Action | Control |
 |---|---|
-| Look around | Move the mouse |
-| Swim | `W` `A` `S` `D` |
-| Up / down | `E` / `Q` |
-| Swim faster | Hold `Shift` |
-| Jump to a viewpoint | `1` to `6` (the spots in the screenshots) |
-| Menu | `Esc` releases the mouse and opens the menu with the list of controls; **Resume** takes you back |
-| Sound on / off | `M` (sound starts when you dive in) |
-| Performance stats | `H` |
-| Detail level | **Low**, **Medium** or **High** in the menu (reloads the page) |
+| Look | Mouse, with pointer lock |
+| Fly | `W` `A` `S` `D` |
+| Down / up | `Q` / `E` |
+| Boost | Hold `Shift` |
+| Overview / Verdant / Selene / Cinder / Veil / Kestrel / Nadir | `1` through `7` |
+| Menu | `Esc` |
+| Sound on / off | `M` |
+| Performance statistics | `H` |
 
-The seabed, cliffs and arches are solid: you glide along the rock instead of swimming into it, and you still fit through every tunnel and arch. Kelp, plants, corals, sponges, loose rocks, the floating boulders, the ship and the whale tail you can swim through.
+The menu also has destination buttons and **Low**, **Medium**, **High** detail controls. Before Start, changing quality updates the pending choice without generating anything. After launch, changing quality reloads to the welcome screen. Quality and adaptive resolution are remembered independently of the original ocean demo. Once started, the scene keeps rendering behind the pause menu while camera movement pauses.
 
-**On a touchscreen:** hold one finger down to swim forward and slide it to steer. Put a second finger down to go faster. The `≡` button in the corner opens the menu. Phones always show the scene in landscape and start on Low or Medium detail. (Touch support is experimental.)
+On touchscreens, hold to move forward, slide to steer, and add a second finger to boost. The corner button opens the menu. Portrait devices rotate the page into landscape. Touch support remains experimental.
 
-## Detail levels
+## Procedural implementation
 
-The **Low**, **Medium** and **High** buttons in the menu pick the detail level; the current one is lit. Each level is the same world, built with less in it:
+- Seeded CPU generators build icosphere meshes, an annular ring mesh and asteroid instances. High detail has 8,300 asteroids and ring fragments; Medium has 4,100; Low has 1,800.
+- WGSL functions generate all surface colors and detail directly from 3D coordinates. No UV texture maps are loaded. The starfield stays fixed in celestial directions while nearby objects have parallax.
+- Direct WebGPU rendering uses reversed depth, instanced geometry, atmospheric shells, analytic ring shadows, HDR bloom and tone mapping. High and Medium use 4x MSAA; Low uses fewer triangles and noise octaves, and no MSAA.
+- Camera state, sort buffers and render descriptors are reused. Adaptive resolution targets approximately 60 fps, with GPU timestamp queries where supported. Device loss retries at a lower quality level.
+- Web Audio oscillators generate a reactor hum, pitched ion-drive harmonics, a rising warp-charge tone, harmonic pads and navigation tones after user interaction. Cruise and boost follow flight velocity and input; orbital camera tracking is silent. There are no wind or broadband-noise sources. These are fictional onboard sounds.
+- The menu footer credits [Noniv's Abyssal Garden](https://github.com/Noniv/abyssal-garden).
 
-| Level | What it is | Picked on a first visit for |
-|---|---|---|
-| **High** | The full scene | Computers |
-| **Medium** | Half of the leaves, sparkles and pebbles; small rocks, sponges and corals cast no shadows | Phones with 8 GB of memory |
-| **Low** | A quarter of the leaves, no anti-aliasing, coarser rocks and corals, simpler lighting, 480p to start with | Other phones, and computers with 4 GB of memory or less |
+## Build and edit
 
-If loading crashes the tab, or the graphics driver gives up, the page starts again one level lower. Your browser remembers the level, and the resolution and draw distance the scene settled on, for the next visit.
+Requires Node.js 18 or newer:
 
-## How it works
-
-- The seabed is sculpted on your graphics card every time the page opens, then decorated with about two million kelp leaves and plants, tens of thousands of rocks, and thousands of sponges, corals and fish.
-- Everything is drawn with **WebGPU** directly. No game engine or 3D library is used.
-- The ship, whale tail, mantas, fish and corals are built from simple mathematical shapes.
-- The sound is synthesized live with the Web Audio API.
-- It's built to run smoothly: about 180 fps at 2560×1440 on an RTX 5070 Ti. On slower hardware it aims for 60 fps by lowering first the resolution and then how far away plants and rocks are drawn, in small steps. The scene is already running, blurred, behind the start menu, so most of that tuning is done before you dive in. A low-end phone (Samsung Galaxy A16) reaches about 20 fps at 670×372 on Low.
-
-## Make it your own
-
-The readable source code is in the [`source`](source) folder. To change something and rebuild `index.html` you need [Node.js](https://nodejs.org) 18 or newer:
-
-```bash
+```sh
 cd source
-npm install
+npm ci
 npm run build
 ```
 
-This writes a new `index.html` next to this README. `npm run build:readable` writes an unminified version instead, which is easier to debug in the browser's developer tools.
+This rebuilds `index.html` in the repository root. The build reports the uncompressed and gzip sizes. `npm run build:readable` writes an unminified `index.html`; run `npm run build` again before distributing it.
 
-`npm run build:dev` writes a separate `dev.html` with two extra tools that are not part of `index.html`: `F` flies the camera along a one-minute path through the whole world, and `B` runs that flight as a benchmark and reports frame and GPU times.
+`npm run build:dev` writes a separate, ignored `dev.html`. In that version, `F` flies a 60-second route, and `B` runs the route as a benchmark with fixed resolution and frame/GPU timing statistics. `F`, `B` or a destination shortcut cancels a flight. Development diagnostics never ship in `index.html`.
 
-| File | What's inside |
+| File | Purpose |
 |---|---|
-| [`source/src/world.js`](source/src/world.js) | The world layout: rock walls, arches, tunnels, kelp forests, sponge gardens, fish schools, mantas, the ship and the whale tail. **A good place to start.** |
-| [`source/src/shaders.js`](source/src/shaders.js) | The look: water and fog colors, lighting, kelp, rocks, the water surface and light rays (WGSL shader code) |
-| [`source/src/main.js`](source/src/main.js) | The renderer, the camera, the controls, the six viewpoints and the camera path the world is laid out around |
-| [`source/src/audio.js`](source/src/audio.js) | The soundscape |
-| [`source/src/quality.js`](source/src/quality.js) | The detail levels: which one a device starts on, and what is remembered between visits |
-| [`source/src/math.js`](source/src/math.js) | Noise, random numbers and mesh-building helpers |
-| [`source/src/dev.js`](source/src/dev.js) | Development tools (fly-through and benchmark), only in `dev.html` |
-| [`source/template.html`](source/template.html) | The page around the scene: loading bar, start menu, links and their styles |
+| [`world.js`](source/src/world.js) | Planet definitions, seeds, ring orientation, asteroid generation, viewpoints and camera route |
+| [`shaders.js`](source/src/shaders.js) | Procedural surfaces, starfield, nebulae, atmospheres, rings, lighting and postprocessing |
+| [`main.js`](source/src/main.js) | WebGPU resources, renderer, free flight, collisions, input and adaptive resolution |
+| [`audio.js`](source/src/audio.js) | Synthesized onboard soundscape |
+| [`quality.js`](source/src/quality.js) | Quality selection, saved settings and crash recovery |
+| [`start.js`](source/src/start.js) | First-click gate and pre-start quality controls; all generation follows this gate |
+| [`math.js`](source/src/math.js) | Seeded randomness, noise, quaternions and mesh helpers |
+| [`dev.js`](source/src/dev.js) | Development camera flight, benchmarks and browser diagnostics |
+| [`template.html`](source/template.html) | Loading state, observatory menu, controls and flight overlay |
 
-Some easy first tweaks:
+To customize the system, edit `BODIES`, `STAR`, `BLACK_HOLE`, `DISTANT_WORLDS`, `RING_TILT`, `RING_TWIST` and `OVERVIEW` in `world.js`. Each local body defines an orbital radius, starting phase, inclination, physical radius, surface kind, seed, spin and atmosphere. `updateOrbits` evaluates circular positions from absolute simulation time; each orbital plane passes through its parent. The distant worlds are stored separately and remain fixed. Movement speeds are `240 : 65` in `main.js` (boost : cruise).
 
-- **Water color:** `WCOL` (blue-green water) and `PCOL` (purple grotto) near the top of the shared scene code in `shaders.js`
-- **Sunlight color:** `SUNC` right next to them
-- **Brightness and light rays:** `EXPO` and `RAYS` in `main.js`
-- **Swimming speed:** search for `26 : 7` in `main.js` (fast speed : normal speed)
+## Verification
 
-## License
+On Windows with Python 3 and Chrome installed:
 
-[MIT](LICENSE): free to use, change and share, including in your own projects.
+```sh
+cd source
+npm run build
+npm run build:dev
+cd ..
+python tools/check_scene.py --screenshots --benchmark
+python tools/check_scene.py --quality 1
+python tools/check_scene.py --quality 2
+```
+
+The standard-library-only checker launches headless Chrome with real WebGPU, exercises controls, cruise/warp audio state and all seven destinations, and checks collisions and the camera path. It verifies zero GPU requests before Start, pre-start quality changes, initial phases around the sun, a shared orbital plane and fixed background worlds. It samples 421 orbital configurations for constant radii and planet separation, checks viewpoint tracking, verifies the footer credit and rename, and opens the minified production file directly from disk. It fails on JavaScript or WebGPU validation errors. Screenshots, browser logs and benchmark reports go to the ignored `.checks/` directory. Default viewport is 2560 x 1440; `--width` and `--height` override it.
+
+Measured results and limits are recorded in [`VERIFICATION.md`](VERIFICATION.md). Headless timing is specific to the test machine; it is not a performance guarantee for other devices. Physical mobile devices are not part of this verification.
+
+## License and origin
+
+[MIT](LICENSE). Adapted from Maksymilian Dendura's Abyssal Garden, retaining its single-file, procedural, direct-WebGPU approach and shared mathematical helpers.

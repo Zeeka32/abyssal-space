@@ -1,71 +1,80 @@
-// ============================================================================
-// audio: procedural underwater ambience (no sample files)
-// ============================================================================
-// A fixed Web Audio graph, built on the first click / key / touch and driven by a 10 Hz timer, not the frame loop.
-// Layers: rumble, surface wash, water rush (follows camera speed), drone, bubbles, chimes and distant whale calls.
+// Fictional onboard audio: tonal reactor hum, ion-drive harmonics and warp charge.
+// Every source is an oscillator. There are no noise buffers or wind/rush layers.
 let AC, OUT, muted = false;
-const VOL = 0.78; // master level: about -18.5 LUFS, peaks near -5.5 dBFS
+const VOL = .52, AUDIO_STATE = { drive: 0, boost: false };
 function mkSound(ac) {
-  const sr = ac.sampleRate;
-  // node of class C with options o, connected to every node / param in `to`; sources start at once
-  const N = (C, o, ...to) => { const n = new C(ac, o); for (const d of to) n.connect(d); if (n.start) n.start(); return n; };
+  rseed(99);
+  const N = (C, options, ...to) => { const n = new C(ac, options); for (const d of to) n.connect(d); if (n.start) n.start(); return n; };
   const G = (gain, ...to) => N(GainNode, { gain }, ...to);
-  const BQ = (type, frequency, Q, ...to) => N(BiquadFilterNode, { type, frequency, Q }, ...to);
-  const lfo = (frequency, depth, to) => N(OscillatorNode, { frequency }, G(depth, to));
-  const noise = (secs, f) => { const n = sr * secs | 0, b = new AudioBuffer({ length: n, numberOfChannels: 2, sampleRate: sr }); f(b.getChannelData(0), n); f(b.getChannelData(1), n); return b; };
-  // seamless brown noise loop (the end cross-fades into the start)
-  const nb = noise(11, (d, n) => { for (let i = 0, b = 0; i < n + 4096; i++) { b = (b + 0.02 * (rnd() * 2 - 1)) / 1.02; if (i < n) d[i] = b * 3.5; else { const k = (i - n) / 4096; d[i - n] = d[i - n] * k + b * 3.5 * (1 - k); } } });
-  // reverb impulse: 5 s of noise that fades out and gets darker
-  const ir = noise(5, (d, n) => { for (let i = 0, b = 0; i < n; i++) { const t = i / sr; b += (rnd() * 2 - 1 - b) * (0.04 + 0.5 * exp(-t * 2)); d[i] = b * (1 - exp(-t * 30)) * exp(-t * 1.5) * (1 - i / n); } });
-
-  const lim = N(DynamicsCompressorNode, { threshold: -6, knee: 6, ratio: 20, attack: 0.003, release: 0.3 }, ac.destination);
-  const out = OUT = G(0, lim), wet = N(ConvolverNode, { buffer: ir }, out);
-  const src = (playbackRate, ...to) => N(AudioBufferSourceNode, { buffer: nb, loop: true, playbackRate }, ...to);
-  // rumble
-  const rum = G(0.34, out); src(1, BQ('lowpass', 150, 0.7, rum)); lfo(0.07, 0.11, rum.gain); lfo(0.113, 0.08, rum.gain);
-  // surface wash + water rush: the same noise played at another speed, so the loops never line up
-  const wash = G(0.25, out), wave = G(1, wash), rush = G(0, out), rushF = BQ('bandpass', 300, 0.9, rush);
-  src(0.63, BQ('bandpass', 420, 0.5, wave), rushF); lfo(0.09, 0.3, wave.gain); lfo(0.151, 0.25, wave.gain);
-  // drone: stacked fifths on D, each note a pair of slightly detuned sines that slowly beat
-  const pad = G(1, out, G(1.5, wet));
-  [73.42, 110, 164.81, 246.94, 369.99].forEach((f, i) => { const g = G(0.022 - i * 0.003, pad); N(OscillatorNode, { frequency: f }, g); N(OscillatorNode, { frequency: f + rr(0.03, 0.11) }, g); });
-  // pooled voices: oscillator -> envelope -> pan -> dry + reverb
-  const pool = (n, send, type) => Array.from({ length: n }, () => { const p = N(StereoPannerNode, {}, out, G(send, wet)), g = G(0, p); return { p, g, o: N(OscillatorNode, { type }, g) }; });
-  const bub = pool(4, 0.12), chime = pool(3, 1.2), whale = pool(2, 2, 'triangle');
-  // one note: pitch glides f0 -> f1 over dur, level rises to vol in att then dies away
-  const play = (vs, t, f0, f1, dur, vol, att) => {
-    const v = vs.shift(), f = v.o.frequency, g = v.g.gain; vs.push(v);
-    v.p.pan.setValueAtTime(rr(-0.7, 0.7), t);
-    f.setValueAtTime(f0, t); f.exponentialRampToValueAtTime(f1, t + dur);
-    g.setValueAtTime(0, t); g.linearRampToValueAtTime(vol, t + att); g.setTargetAtTime(0, t + att, (dur - att) / 5);
-  };
-  const NOTES = [0, 2, 5, 7, 9, 12, 14, 17, 19]; // D major pentatonic, in semitones above A4
-  let lt = ac.currentTime, tB = lt + 1.5, tC = lt + 5, tW = lt + 12, lx = F[CX], ly = F[CY], lz = F[CZ];
-  out.gain.setTargetAtTime(VOL, lt, 1);
+  const limit = N(DynamicsCompressorNode, { threshold: -8, knee: 8, ratio: 12, attack: .005, release: .4 }, ac.destination);
+  const out = OUT = G(muted ? 0 : VOL, limit);
+  const delay = N(DelayNode, { maxDelayTime: 2, delayTime: .59 }, G(.18, out));
+  delay.connect(G(.30, delay));
+  // The idle reactor is pitched, with slow beating rather than broadband rumble.
+  const reactor = G(.045, out);
+  N(OscillatorNode, { frequency: 36, type: 'sine' }, reactor);
+  N(OscillatorNode, { frequency: 36.16, type: 'sine' }, reactor);
+  const engine = G(0, out), engineTone = N(BiquadFilterNode, { type: 'lowpass', frequency: 520, Q: .6 }, engine);
+  const carrier = N(OscillatorNode, { type: 'triangle', frequency: 48 }, engineTone);
+  const harmonic = N(OscillatorNode, { type: 'sine', frequency: 96.2 }, G(.34, engineTone));
+  const fmDepth = G(0, carrier.frequency), modulator = N(OscillatorNode, { frequency: 8, type: 'sine' }, fmDepth);
+  const warpGain = G(0, out, delay), warp = N(OscillatorNode, { type: 'sine', frequency: 140 }, warpGain);
+  const chargeGain = G(0, out, delay), charge = N(OscillatorNode, { type: 'sine', frequency: 70 }, chargeGain);
+  const pad = G(.65, out, delay);
+  for (const f of [55, 82.407, 110, 164.814, 220]) {
+    const g = G(.026, pad);
+    N(OscillatorNode, { frequency: f }, g); N(OscillatorNode, { frequency: f + .07 }, g);
+    N(OscillatorNode, { frequency: rr(.025, .07) }, G(.009, g.gain));
+  }
+  const voices = Array.from({ length: 4 }, () => {
+    const pan = N(StereoPannerNode, {}, out, delay), envelope = G(0, pan);
+    return { oscillator: N(OscillatorNode, { type: 'sine', frequency: 440 }, envelope), envelope, pan };
+  });
+  const notes = [220, 293.665, 329.628, 440, 587.33, 659.255];
+  let next = ac.currentTime + 2, voice = 0, wasBoost = false;
   return () => {
-    const now = ac.currentTime, t = now + 0.05, dt = now - lt;
-    if (dt <= 0) return;
-    let v = hypot(F[CX] - lx, F[CY] - ly, F[CZ] - lz) / dt; if (v > 60) v = 0; // ignore jumps to a viewpoint
-    lt = now; lx = F[CX]; ly = F[CY]; lz = F[CZ];
-    rush.gain.setTargetAtTime(0.5 * pow(min(v / 26, 1), 1.2), t, 0.3); rushF.frequency.setTargetAtTime(220 + v * 14, t, 0.3);
-    const s = clamp(1 + ly / 30, 0, 1); wash.gain.setTargetAtTime(0.25 + 0.55 * s * s, t, 0.5);
-    if (t > tB) { // a burst of 1-6 bubbles: short rising blips, smaller bubbles higher and shorter
-      let tt = t;
-      for (let n = 1 + rnd() * rnd() * 6 | 0; n--;) { const f = rr(380, 1300); play(bub, tt, f, f * rr(1.4, 2.2), 0.05 + 40 / f, rr(0.03, 0.08), 0.006); tt += rr(0.07, 0.2); }
-      tB = tt + rr(0.5, 5);
+    const now = ac.currentTime;
+    // Use flight velocity, so orbit tracking and destination jumps never fire the drive.
+    const speed = menu ? 0 : min(240, hypot(F[VX], F[VY], F[VZ]));
+    const drive = clamp(speed / 65, 0, 1), boost = !menu && (ks || tN > 1) && speed > 15;
+    AUDIO_STATE.drive = drive; AUDIO_STATE.boost = !!boost;
+    engine.gain.setTargetAtTime(drive * (boost ? .12 : .085), now, .15);
+    carrier.frequency.setTargetAtTime(44 + drive * 28 + (boost ? 48 : 0), now, .20);
+    harmonic.frequency.setTargetAtTime(88.2 + drive * 56 + (boost ? 96 : 0), now, .20);
+    modulator.frequency.setTargetAtTime(boost ? 22 : 8, now, .18);
+    fmDepth.gain.setTargetAtTime(boost ? 28 : drive * 4, now, .18);
+    engineTone.frequency.setTargetAtTime(boost ? 760 : 380, now, .18);
+    warp.frequency.setTargetAtTime(140 + speed * .45, now, .25);
+    warpGain.gain.setTargetAtTime(boost ? .042 : 0, now, .18);
+    if (boost && !wasBoost) {
+      charge.frequency.cancelScheduledValues(now);
+      charge.frequency.setValueAtTime(70, now); charge.frequency.exponentialRampToValueAtTime(420, now + .65);
+      chargeGain.gain.cancelScheduledValues(now);
+      chargeGain.gain.setValueAtTime(0, now); chargeGain.gain.linearRampToValueAtTime(.09, now + .07);
+      chargeGain.gain.exponentialRampToValueAtTime(.0001, now + .85);
     }
-    if (t > tC) { const f = 440 * pow(2, NOTES[rnd() * 9 | 0] / 12); play(chime, t, f, f, 5, rr(0.02, 0.04), 0.03); tC = t + rr(2.5, 9); }
-    if (t > tW) { // a phrase of 2-3 slow glides
-      let tt = t;
-      for (let n = 2 + rnd() * 2 | 0; n--;) { const f = rr(170, 380), d = rr(1.6, 3.2); play(whale, tt, f, f * rr(0.6, 1.7), d, 0.08, d * 0.4); tt += d * 0.8; }
-      tW = tt + rr(20, 50);
+    if (!boost && wasBoost) { chargeGain.gain.cancelScheduledValues(now); chargeGain.gain.setTargetAtTime(0, now, .08); }
+    wasBoost = !!boost;
+    if (now > next) {
+      const v = voices[voice++ % voices.length], f = notes[rnd() * notes.length | 0];
+      v.pan.pan.setValueAtTime(rr(-.65, .65), now); v.oscillator.frequency.setValueAtTime(f, now);
+      v.envelope.gain.cancelScheduledValues(now); v.envelope.gain.setValueAtTime(0, now);
+      v.envelope.gain.linearRampToValueAtTime(.035, now + .04);
+      v.envelope.gain.exponentialRampToValueAtTime(.0001, now + 3.5); next = now + rr(3.5, 9);
     }
   };
 }
-// called on every click / key / touch: builds the graph once and resumes it when the browser allows
 function sound() {
-  if (!AC) { AC = new AudioContext({ latencyHint: 'playback' }); setInterval(mkSound(AC), 100); }
-  if (AC.state === 'suspended' && !document.hidden) AC.resume();
+  if (!AC) {
+    try { AC = launchAudio || new AudioContext({ latencyHint: 'playback' }); setInterval(mkSound(AC), 100); }
+    catch (error) { console.warn('Audio unavailable:', error); return; }
+  }
+  if (AC.state === 'suspended' && !document.hidden) AC.resume().catch(() => {});
 }
-const mute = () => { muted = !muted; OUT.gain.setTargetAtTime(muted ? 0 : VOL, AC.currentTime, 0.08); };
-document.addEventListener('visibilitychange', () => { if (AC) document.hidden ? AC.suspend() : AC.resume(); });
+function mute() {
+  muted = !muted;
+  if (AC && OUT) OUT.gain.setTargetAtTime(muted ? 0 : VOL, AC.currentTime, .1);
+}
+document.addEventListener('visibilitychange', () => { if (AC) (document.hidden ? AC.suspend() : AC.resume()).catch(() => {}); });
+sound();
+if (!mob) capture();

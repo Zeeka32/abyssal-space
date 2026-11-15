@@ -1,7 +1,7 @@
 {
-  "name": "abyssal-garden",
+  "name": "astral-space",
   "private": true,
-  "description": "A procedural underwater world rendered with WebGPU, bundled into one HTML file",
+  "description": "A fully procedural planetary system rendered with WebGPU, bundled into one offline HTML file",
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
