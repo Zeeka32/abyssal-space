@@ -1,10 +1,10 @@
-# Astral Space verification
+# Abyssal Space verification
 
 Verified 2026-11-15 on Windows using headless Chrome 157.0.8103.51 with hardware WebGPU. The adapter reports NVIDIA, Turing architecture; Chrome does not expose its exact device model. These measurements describe this machine and browser session.
 
 ## Deliverable
 
-- `index.html`: **47,232 bytes (46.1 KiB)**, approximately **19.0 KiB gzip**.
+- `index.html`: **47,388 bytes (46.3 KiB)**, approximately **19.1 KiB gzip**.
 - Self-contained production HTML, opened directly from `file:///`.
 - No downloaded textures, models, sounds, fonts or runtime JavaScript libraries.
 - Separate readable `dev.html` for diagnostics; development hooks are absent from production.
@@ -20,7 +20,7 @@ Verified 2026-11-15 on Windows using headless Chrome 157.0.8103.51 with hardware
 - Starting layout covers both sides of the central sun in a nearly coplanar ecliptic, rather than clustered below it.
 - Three distant world instances remain fixed outside the local orbital update; no additional destination buttons are added.
 - Launch, WASD movement, mute and return to the menu.
-- All seven destination shortcuts, the Astral Space title and the linked Abyssal Garden footer credit.
+- All seven destination shortcuts, the Abyssal Space title, this repository's GitHub link and the linked Abyssal Garden footer credit.
 - Web Audio initialization, cruise-drive state, warp-charge state, and silent propulsion during orbital tracking.
 - Seven swept collision tests: six worlds and the black hole's horizon.
 - 421 orbital configurations spanning 4,200 simulated seconds, checking parent-relative radii and separation between worlds.

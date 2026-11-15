@@ -156,8 +156,9 @@ def main():
         assert state['samples'] == (1 if args.quality == 2 else 4), 'Pre-start quality choice did not update antialiasing'
         assert state['time'] < 2, 'Simulation time includes pre-start waiting'
         assert cdp.evaluate('window.__gpuRequests') == 1, 'Expected exactly one post-click adapter request'
-        assert cdp.evaluate('document.title') == 'Astral Space', 'Rename missing'
+        assert cdp.evaluate('document.title') == 'Abyssal Space', 'Rename missing'
         assert cdp.evaluate("document.getElementById('credit').href") == 'https://github.com/Noniv/abyssal-garden', 'Credit missing'
+        assert cdp.evaluate("document.getElementById('repo').href") == 'https://github.com/Zeeka32/abyssal-space', 'Project repository link missing'
         time.sleep(.5)
         print('AUDIO', json.dumps(cdp.evaluate('__astral.state()')), flush=True)
         assert cdp.evaluate('__astral.state().audio') == 'running'

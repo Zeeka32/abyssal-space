@@ -1,4 +1,4 @@
-Build Astral Space: a real-time, fully procedural space exploration scene in the browser.
+Build Abyssal Space: a real-time, fully procedural space exploration scene in the browser.
 
 PRIORITIES
 1. Visual quality and a coherent sense of scale.
@@ -21,7 +21,7 @@ SCENE
 - Planets start distributed around a central sun on a common ecliptic, with visible orbit guides; Selene orbits Aurelia. Rings and atmospheres follow moving centers.
 - Destinations track their planet until manual flight starts; collision bounds follow orbital motion.
 - Tonal ion-drive cruise and warp-charge boost audio, with no wind or noise buffers.
-- A quiet observatory menu named Astral Space, with a footer credit linking to https://github.com/Noniv/abyssal-garden.
+- A quiet observatory menu named Abyssal Space, with a footer credit linking to https://github.com/Noniv/abyssal-garden.
 - Compressed artistic distances and orbital periods; no N-body gravity simulation.
 
 CONTROLS

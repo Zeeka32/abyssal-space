@@ -2,7 +2,7 @@
 <html lang=en>
 <head>
 <meta charset=utf-8>
-<title>Astral Space</title>
+<title>Abyssal Space</title>
 <meta name=viewport content="width=device-width,initial-scale=1">
 <meta name=theme-color content=#050710>
 <meta name=description content="Explore a fully procedural planetary system. Planets, rings, asteroids, stars and sound, generated entirely from code with WebGPU.">
@@ -69,8 +69,8 @@ button:active { transform: translateY(.1em); }
 #h { display: none; }
 #f { position: absolute; left: 1em; right: 1em; bottom: 1.4em; color: #77798c; font: 400 .5em/1.6 ui-monospace, Consolas, monospace; letter-spacing: .16em; }
 #f span { display: block; color: #535669; font-size: .9em; }
-#credit { display: block; margin-top: .65em; color: #a6a6b8; font-size: 1.1em; letter-spacing: .06em; text-decoration: none; }
-#credit:hover { color: #e3d4b4; text-decoration: underline; }
+#repo, #credit { display: block; margin-top: .65em; color: #a6a6b8; font-size: 1.1em; letter-spacing: .06em; text-decoration: none; }
+#repo:hover, #credit:hover { color: #e3d4b4; text-decoration: underline; }
 #nav button:last-child { grid-column: 1 / -1; }
 #o { position: absolute; top: .6em; right: .6em; display: none; padding: .3em .6em; background: #111324d9; border: 1px solid #c6b798; border-radius: .5em; font-size: 1.3em; color: #eeeee9; opacity: .8; }
 .g #o { display: block; }
@@ -89,7 +89,7 @@ button:active { transform: translateY(.1em); }
 <body class="m welcome" data-stage=welcome>
 <canvas id=c aria-label="Procedurally generated planetary system"></canvas>
 <div id=m>
-  <div id=title><p id=eyebrow>A procedural cosmic explorer</p><h1>Astral Space</h1><p id=subtitle>Six worlds. A thousand horizons. All made of mathematics.</p></div>
+  <div id=title><p id=eyebrow>A procedural cosmic explorer</p><h1>Abyssal Space</h1><p id=subtitle>Six worlds. A thousand horizons. All made of mathematics.</p></div>
   <div id=a>
     <div id=l><div id=p><i id=b></i></div><p id=s role=status>Charting the system...</p><p id=w hidden>Use Google Chrome for optimal experience</p></div>
     <div id=g>
@@ -112,7 +112,7 @@ button:active { transform: translateY(.1em); }
       <p id=h>Hold to fly forward &middot; slide to steer &middot; second finger to go faster</p>
     </div>
   </div>
-  <p id=f>No textures &middot; No models &middot; No sound files<span>Built entirely from code</span><a id=credit href=https://github.com/Noniv/abyssal-garden target=_blank rel="noopener noreferrer">Original project: Abyssal Garden by Noniv &nearr;</a></p>
+  <p id=f>No textures &middot; No models &middot; No sound files<span>Built entirely from code</span><a id=repo href=https://github.com/Zeeka32/abyssal-space target=_blank rel="noopener noreferrer">GitHub &middot; Source code &nearr;</a><a id=credit href=https://github.com/Noniv/abyssal-garden target=_blank rel="noopener noreferrer">Original project: Abyssal Garden by Noniv &nearr;</a></p>
 </div>
 <button id=o aria-label=Menu>&#8801;</button>
 <div id=flight><span id=signal></span><span id=sector>The solar system</span><span id=flight-hint>WASD to fly &nbsp; / &nbsp; 1&ndash;7 to explore &nbsp; / &nbsp; ESC for menu</span></div>

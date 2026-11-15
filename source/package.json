@@ -1,5 +1,5 @@
 {
-  "name": "astral-space",
+  "name": "abyssal-space",
   "private": true,
   "description": "A fully procedural planetary system rendered with WebGPU, bundled into one offline HTML file",
   "type": "module",

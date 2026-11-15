@@ -1,4 +1,4 @@
-# Astral Space
+# Abyssal Space
 
 A fully procedural planetary system you can fly through in your browser. Sun-centered worlds, luminous rings, asteroid fields, a black hole, distant giant planets, spiral galaxies and a synthesized onboard soundscape, all in one self-contained HTML file.
 
@@ -56,7 +56,7 @@ On touchscreens, hold to move forward, slide to steer, and add a second finger t
 - Direct WebGPU rendering uses reversed depth, instanced geometry, atmospheric shells, analytic ring shadows, HDR bloom and tone mapping. High and Medium use 4x MSAA; Low uses fewer triangles and noise octaves, and no MSAA.
 - Camera state, sort buffers and render descriptors are reused. Adaptive resolution targets approximately 60 fps, with GPU timestamp queries where supported. Device loss retries at a lower quality level.
 - Web Audio oscillators generate a reactor hum, pitched ion-drive harmonics, a rising warp-charge tone, harmonic pads and navigation tones after user interaction. Cruise and boost follow flight velocity and input; orbital camera tracking is silent. There are no wind or broadband-noise sources. These are fictional onboard sounds.
-- The menu footer credits [Noniv's Abyssal Garden](https://github.com/Noniv/abyssal-garden).
+- The menu footer links to [this project's GitHub repository](https://github.com/Zeeka32/abyssal-space) and credits [Noniv's Abyssal Garden](https://github.com/Noniv/abyssal-garden).
 
 ## Build and edit
 
